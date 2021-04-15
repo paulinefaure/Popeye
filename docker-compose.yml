@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  poll:
+    build: ./poll
+    restart: always
+    depends_on:
+      - redis
+    links:
+      - db
+      - redis
+    ports: 
+      - "5000:80"
+    networks:
+      - poll-tier
+    environment:
+      - 0.0.0.0
+
+  redis:
+    image: redis:alpine
+    restart: always
+    expose: 6379
+    ports:
+      - 6379:6379
+    networks:
+      - poll-tier
+      - back-tier
+
+  worker:
+    build: ./worker
+    restart: always
+    networks:
+      - back-tier
+    environment:
+      - 0.0.0.0
+
+  db:
+    image: postgres:9.4
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    
+
+  result:
+    build: ./result
+    restart: always
+    ports:
+      - "5001:80"
+    depends_on:
+      - db
+    networks:
+      - result-tier
+    environment:
+      - 0.0.0.0
+
+networks:
+  poll-tiers:
+  result-tiers:
+  back-tiers:
+
+volumes:
+  db-data:
